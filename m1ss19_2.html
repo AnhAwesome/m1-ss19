@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            padding-top: 30px;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            width: 750px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-radius: 8px;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr auto;
+            gap: 10px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+
+        input, select {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .btn-submit {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            height: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px;
+            font-size: 14px;
+            border-bottom: 2px solid #dee2e6;
+            background-color: #fff;
+        }
+
+        td {
+            padding: 12px 10px;
+            font-size: 14px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .btn-edit {
+            background-color: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #ced4da;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .btn-delete {
+            background-color: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #ced4da;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-edit:hover, .btn-delete:hover {
+            background-color: #d6d8db;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Task Management</h2>
+
+        <div class="form-grid">
+            <input type="text" id="contentInp" placeholder="Content">
+            <input type="date" id="dateInp">
+            <select id="statusInp">
+                <option value="Choose status" disabled selected>Choose status</option>
+                <option value="Pending">Pending</option>
+                <option value="Fulfill">Fulfill</option>
+                <option value="Reject">Reject</option>
+            </select>
+            <input type="text" id="userInp" placeholder="Username">
+            <button class="btn-submit" id="submitBtn" onclick="handleSubmit()">Submit</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 35%;">Content</th>
+                    <th style="width: 15%;">Due date</th>
+                    <th style="width: 15%;">Status</th>
+                    <th style="width: 15%;">Assigned to</th>
+                    <th style="width: 15%;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="taskTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let initialCourses = [
+            { id: 1, content: 'Learn Javascript Session 01', dueDate: '2023-04-17', status: 'Pending', assignedTo: 'Anh Bách' },
+            { id: 2, content: 'Learn Javascript Session 2', dueDate: '2023-04-17', status: 'Pending', assignedTo: 'Lâm thầ' },
+            { id: 3, content: 'Learn CSS Session 1', dueDate: '2023-04-17', status: 'Pending', assignedTo: 'Hiếu Ci ớt ớt' }
+        ];
+
+        let courses = JSON.parse(localStorage.getItem("courses"));
+        if (courses === null) {
+            courses = initialCourses;
+            localStorage.setItem("courses", JSON.stringify(courses));
+        }
+
+        let editId = -1;
+
+        function renderTasks() {
+            let tbody = document.getElementById("taskTableBody");
+            tbody.innerHTML = "";
+
+            for (let i = 0; i < courses.length; i++) {
+                let tr = document.createElement("tr");
+
+                let tdIndex = document.createElement("td");
+                tdIndex.textContent = i + 1;
+                tr.appendChild(tdIndex);
+
+                let tdContent = document.createElement("td");
+                tdContent.textContent = courses[i].content;
+                tr.appendChild(tdContent);
+
+                let tdDate = document.createElement("td");
+                tdDate.textContent = courses[i].dueDate;
+                tr.appendChild(tdDate);
+
+                let tdStatus = document.createElement("td");
+                tdStatus.textContent = courses[i].status;
+                tr.appendChild(tdStatus);
+
+                let tdUser = document.createElement("td");
+                tdUser.textContent = courses[i].assignedTo;
+                tr.appendChild(tdUser);
+
+                let tdAction = document.createElement("td");
+                
+                let btnEdit = document.createElement("button");
+                btnEdit.className = "btn-edit";
+                btnEdit.textContent = "Sửa";
+                btnEdit.setAttribute("onclick", "editTask(" + courses[i].id + ")");
+                tdAction.appendChild(btnEdit);
+
+                let btnDelete = document.createElement("button");
+                btnDelete.className = "btn-delete";
+                btnDelete.textContent = "Xóa";
+                btnDelete.setAttribute("onclick", "deleteTask(" + courses[i].id + ")");
+                tdAction.appendChild(btnDelete);
+
+                tr.appendChild(tdAction);
+                tbody.appendChild(tr);
+            }
+        }
+
+        function handleSubmit() {
+            let content = document.getElementById("contentInp").value.trim();
+            let dueDate = document.getElementById("dateInp").value;
+            let status = document.getElementById("statusInp").value;
+            let assignedTo = document.getElementById("userInp").value.trim();
+
+            if (content === "" || dueDate === "" || status === "Choose status" || assignedTo === "") {
+                alert("Vui lòng điền đầy đủ thông tin dữ liệu!");
+                return;
+            }
+
+            if (editId === -1) {
+                let maxId = 0;
+                for (let i = 0; i < courses.length; i++) {
+                    if (courses[i].id > maxId) {
+                        maxId = courses[i].id;
+                    }
+                }
+                let newTask = {
+                    id: maxId + 1,
+                    content: content,
+                    dueDate: dueDate,
+                    status: status,
+                    assignedTo: assignedTo
+                };
+                courses.push(newTask);
+            } else {
+                for (let i = 0; i < courses.length; i++) {
+                    if (courses[i].id === editId) {
+                        courses[i].content = content;
+                        courses[i].dueDate = dueDate;
+                        courses[i].status = status;
+                        courses[i].assignedTo = assignedTo;
+                        break;
+                    }
+                }
+                editId = -1;
+                document.getElementById("submitBtn").textContent = "Submit";
+            }
+
+            localStorage.setItem("courses", JSON.stringify(courses));
+            clearInputs();
+            renderTasks();
+        }
+
+        function editTask(id) {
+            editId = id;
+            let currentTask;
+            for (let i = 0; i < courses.length; i++) {
+                if (courses[i].id === id) {
+                    currentTask = courses[i];
+                    break;
+                }
+            }
+
+            if (currentTask) {
+                document.getElementById("contentInp").value = currentTask.content;
+                document.getElementById("dateInp").value = currentTask.dueDate;
+                document.getElementById("statusInp").value = currentTask.status;
+                document.getElementById("userInp").value = currentTask.assignedTo;
+                document.getElementById("submitBtn").textContent = "Update";
+            }
+        }
+
+        function deleteTask(id) {
+            for (let i = 0; i < courses.length; i++) {
+                if (courses[i].id === id) {
+                    courses.splice(i, 1);
+                    break;
+                }
+            }
+            if (editId === id) {
+                editId = -1;
+                document.getElementById("submitBtn").textContent = "Submit";
+                clearInputs();
+            }
+            localStorage.setItem("courses", JSON.stringify(courses));
+            renderTasks();
+        }
+
+        function clearInputs() {
+            document.getElementById("contentInp").value = "";
+            document.getElementById("dateInp").value = "";
+            document.getElementById("statusInp").value = "Choose status";
+            document.getElementById("userInp").value = "";
+        }
+
+        renderTasks();
+    </script>
+
+</body>
+</html>
