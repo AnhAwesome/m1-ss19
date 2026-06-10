@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Bookmark App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2b1f3d;
+            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 20px 20px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 50px;
+            margin: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .btn-add-main {
+            background-color: #171022;
+            color: #8f8f8f;
+            border: 1px solid #332546;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 40px;
+        }
+
+        .btn-add-main:hover {
+            color: #fff;
+            background-color: #20172e;
+        }
+
+        .bookmark-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 650px;
+        }
+
+        .bookmark-item {
+            background-color: #171022;
+            border: 1px solid #332546;
+            padding: 15px 20px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .bookmark-link {
+            color: #8f8f8f;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 90%;
+        }
+
+        .bookmark-link:hover {
+            color: #fff;
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #55416c;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .btn-delete:hover {
+            color: #ff4a4a;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            width: 420px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            background-color: #8e62bc;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: white;
+        }
+
+        .modal-close {
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .modal-body {
+            padding: 25px 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #8e62bc;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #d3c4e3;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            color: #333;
+        }
+
+        .form-group input:focus {
+            border-color: #8e62bc;
+        }
+
+        .btn-save {
+            background-color: #8e62bc;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-save:hover {
+            background-color: #794fa3;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="btn-add-main" onclick="openModal()">Add Bookmark</button>
+
+    <div class="bookmark-container" id="bookmarkList"></div>
+
+    <div class="modal-overlay" id="bookmarkModal" onclick="closeModalOnOverlay(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Bookmark</h3>
+                <span class="modal-close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Website Name</label>
+                    <input type="text" id="siteNameInp">
+                </div>
+                <div class="form-group">
+                    <label>Website URL</label>
+                    <input type="text" id="siteUrlInp">
+                </div>
+                <button class="btn-save" onclick="saveBookmark()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let initialBookmarks = [
+            { name: "Google - Search Engine", url: "https://google.com" },
+            { name: "Youtube - Video Sharing", url: "https://youtube.com" }
+        ];
+
+        let bookmarks = JSON.parse(localStorage.getItem("bookmarks"));
+        if (bookmarks === null) {
+            bookmarks = initialBookmarks;
+            localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
+        }
+
+        function renderBookmarks() {
+            let container = document.getElementById("bookmarkList");
+            container.innerHTML = "";
+
+            for (let i = 0; i < bookmarks.length; i++) {
+                let item = document.createElement("div");
+                item.className = "bookmark-item";
+
+                let link = document.createElement("a");
+                link.className = "bookmark-link";
+                link.href = bookmarks[i].url;
+                link.target = "_blank";
+                link.textContent = bookmarks[i].name;
+
+                let btnDelete = document.createElement("button");
+                btnDelete.className = "btn-delete";
+                btnDelete.innerHTML = "&times;";
+                btnDelete.setAttribute("onclick", "deleteBookmark(" + i + ")");
+
+                item.appendChild(link);
+                item.appendChild(btnDelete);
+                container.appendChild(item);
+            }
+        }
+
+        function openModal() {
+            document.getElementById("bookmarkModal").style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("bookmarkModal").style.display = "none";
+            document.getElementById("siteNameInp").value = "";
+            document.getElementById("siteUrlInp").value = "";
+        }
+
+        function closeModalOnOverlay(event) {
+            if (event.target === document.getElementById("bookmarkModal")) {
+                closeModal();
+            }
+        }
+
+        function saveBookmark() {
+            let name = document.getElementById("siteNameInp").value.trim();
+            let url = document.getElementById("siteUrlInp").value.trim();
+
+            if (name === "" || url === "") {
+                alert("Vui lòng nhập đầy đủ tên và đường dẫn website!");
+                return;
+            }
+
+            if (url.indexOf("http://") !== 0 && url.indexOf("https://") !== 0) {
+                url = "https://" + url;
+            }
+
+            bookmarks.push({ name: name, url: url });
+            localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
+            
+            closeModal();
+            renderBookmarks();
+        }
+
+        function deleteBookmark(index) {
+            bookmarks.splice(index, 1);
+            localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
+            renderBookmarks();
+        }
+
+        renderBookmarks();
+    </script>
+
+</body>
+</html>
