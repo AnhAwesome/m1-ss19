@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Todo App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #4ac1ca, #4e65ff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .todo-card {
+            background-color: white;
+            width: 400px;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        h2 {
+            font-size: 32px;
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            height: 45px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 0 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .input-group .add-btn {
+            width: 45px;
+            background-color: #a07aff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .input-group .add-btn:hover {
+            background-color: #8a5eff;
+        }
+
+        .todo-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0 0 25px 0;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .todo-item {
+            background-color: #f2f2f2;
+            padding: 12px 15px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .todo-item:hover .delete-btn {
+            right: 0;
+        }
+
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            position: absolute;
+            right: -45px;
+            top: 0;
+            bottom: 0;
+            width: 45px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: right 0.2s ease;
+            font-size: 16px;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .clear-btn {
+            background-color: #a07aff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .clear-btn:hover {
+            background-color: #8a5eff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="todo-card">
+        <h2>Todo App</h2>
+        <div class="input-group">
+            <input type="text" id="todoInput" placeholder="Add your new todo">
+            <button class="add-btn" onclick="addTodo()">+</button>
+        </div>
+
+        <ul class="todo-list" id="todoList"></ul>
+
+        <div class="footer">
+            <span id="pendingText">You have 0 pending tasks</span>
+            <button class="clear-btn" onclick="clearAll()">Clear All</button>
+        </div>
+    </div>
+
+    <script>
+        let initialTodos = ["Qu quét nhà", "Rửa bát"];
+        let todos = JSON.parse(localStorage.getItem("todos"));
+
+        if (todos === null) {
+            todos = initialTodos;
+            localStorage.setItem("todos", JSON.stringify(todos));
+        }
+
+        function renderTodos() {
+            let todoList = document.getElementById("todoList");
+            todoList.innerHTML = "";
+
+            for (let i = 0; i < todos.length; i++) {
+                let li = document.createElement("li");
+                li.className = "todo-item";
+                li.textContent = todos[i];
+
+                let deleteBtn = document.createElement("button");
+                deleteBtn.className = "delete-btn";
+                deleteBtn.textContent = "🗑";
+                deleteBtn.setAttribute("onclick", "deleteTodo(event, " + i + ")");
+                
+                li.appendChild(deleteBtn);
+                todoList.appendChild(li);
+            }
+
+            document.getElementById("pendingText").textContent = "You have " + todos.length + " pending tasks";
+        }
+
+        function addTodo() {
+            let input = document.getElementById("todoInput");
+            let value = input.value.trim();
+
+            if (value === "") {
+                alert("Vui lòng nhập nội dung công việc!");
+                return;
+            }
+
+            todos.push(value);
+            localStorage.setItem("todos", JSON.stringify(todos));
+            input.value = "";
+            renderTodos();
+        }
+
+        function deleteTodo(event, index) {
+            event.stopPropagation();
+            todos.splice(index, 1);
+            localStorage.setItem("todos", JSON.stringify(todos));
+            renderTodos();
+        }
+
+        function clearAll() {
+            todos = [];
+            localStorage.setItem("todos", JSON.stringify(todos));
+            renderTodos();
+        }
+
+        renderTodos();
+    </script>
+
+</body>
+</html>
